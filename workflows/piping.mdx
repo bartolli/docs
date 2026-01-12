@@ -1,0 +1,56 @@
+---
+title: "Unix Piping"
+description: "Scripting and automation patterns"
+---
+
+All Codanna commands support `--json` for structured output. Pipe errors, logs, or other CLI output to find relevant code.
+
+## Debug with Error Messages
+
+Pipe error output from any tool to find related code:
+
+```bash
+# Run your app, capture error, search for relevant code
+./my_app 2>&1 | grep -i "error\|exception" | head -1 | \
+  xargs -I {} codanna mcp semantic_search_with_context query:"{}" limit:3
+
+# Or from a test runner
+cargo test 2>&1 | grep "panicked" | \
+  xargs -I {} codanna mcp semantic_search_with_context query:"{}" limit:3
+
+# From logs
+tail -1 /var/log/app.log | \
+  xargs -I {} codanna mcp semantic_search_with_context query:"{}" limit:3
+```
+
+## JSON Output
+
+Use `--json` for structured output, pipe to `jq`:
+
+```bash
+codanna mcp semantic_search_with_context query:"authentication" limit:2 --json | \
+  jq -r '.data[] | "\(.symbol.name) - \(.context.file_path)"'
+```
+
+## Chaining Commands
+
+Use output from one search as input to another:
+
+```bash
+# Find symbol, then trace its callers
+codanna mcp semantic_search_with_context query:"config parser" limit:1 --json | \
+  jq -r '.data[0].symbol.name' | \
+  xargs -I {} codanna mcp find_callers {} --json | \
+  jq -r '.data[] | "\(.name) - \(.file_path)"'
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Tool Tiers" icon="layer-group" href="/workflows/tool-tiers">
+    Which tool to use when.
+  </Card>
+  <Card title="CLI Reference" icon="terminal" href="/reference/cli">
+    Complete command reference.
+  </Card>
+</CardGroup>

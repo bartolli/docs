@@ -1,97 +1,49 @@
 ---
-title: "Introduction"
-description: "Welcome to the new home for your documentation"
+title: "Codanna"
+description: "Code intelligence for AI assistants"
 ---
 
-## Setting up
+Code intelligence for AI assistants. Codanna indexes your codebase, understands relationships between symbols, and answers questions about your code through natural language.
 
-Get your documentation site up and running in minutes.
+## Built for Rapid Exploration
 
-<Card
-  title="Start here"
-  icon="rocket"
-  href="/quickstart"
-  horizontal
->
-  Follow our three step quickstart guide.
-</Card>
+Codanna came from our need for rapid research and exploration with proper context. During R&D, quick POCs, and pair-programming sessions, we needed instant answers about our codebase. LSP servers were too slow for that rapid-fire questioning.
 
-## Make it yours
+**Speed for iterative exploration:** When you're in research mode or building a POC, you ask dozens of questions rapidly. Codanna's &lt;10ms lookups keep up with your thought process.
 
-Design a docs site that looks great and empowers your users.
+**Human+LLM pair programming:** The human stays in control. You can run the same queries the AI runs, pipe results through Unix tools, verify context before the AI acts. The `--watch` flag means the index updates as you code.
 
-<Columns cols={2}>
-  <Card
-    title="Edit locally"
-    icon="pen-to-square"
-    href="/development"
-  >
-    Edit your docs locally and preview them in real time.
+**Semantic understanding:** Find code by concept - "where's the retry logic?" - without knowing exact names. Embedding-based search understands what code does from its documentation.
+
+## Why Codanna
+
+<CardGroup cols={3}>
+  <Card title="Find code by meaning" icon="magnifying-glass">
+    Search by concept, not keywords.
   </Card>
-  <Card
-    title="Customize your site"
-    icon="palette"
-    href="/essentials/settings"
-  >
-    Customize the design and colors of your site to match your brand.
+  <Card title="Trace relationships" icon="diagram-project">
+    Know what breaks before you change it.
   </Card>
-    <Card
-    title="Set up navigation"
-    icon="map"
-    href="/essentials/navigation"
-  >
-    Organize your docs to help users find what they need and succeed with your product.
+  <Card title="Works with your AI" icon="plug">
+    MCP integration with your favorite AI stack.
   </Card>
-  <Card
-    title="API documentation"
-    icon="terminal"
-    href="/api-reference/introduction"
-  >
-    Auto-generate API documentation from OpenAPI specifications.
-  </Card>
-</Columns>
+</CardGroup>
 
-## Create beautiful pages
+## Get Started
 
-Everything you need to create world-class documentation.
+```bash
+curl -fsSL --proto '=https' --tlsv1.2 https://install.codanna.sh | sh
+```
 
-<Columns cols={2}>
-  <Card
-    title="Write with MDX"
-    icon="pen-fancy"
-    href="/essentials/markdown"
-  >
-    Use MDX to style your docs pages.
-  </Card>
-  <Card
-    title="Code samples"
-    icon="code"
-    href="/essentials/code"
-  >
-    Add sample code to demonstrate how to use your product.
-  </Card>
-  <Card
-    title="Images"
-    icon="image"
-    href="/essentials/images"
-  >
-    Display images and other media.
-  </Card>
-  <Card
-    title="Reusable snippets"
-    icon="recycle"
-    href="/essentials/reusable-snippets"
-  >
-    Write once and reuse across your docs.
-  </Card>
-</Columns>
+<Note>
+More install options (Homebrew, Cargo) in the [installation guide](/installation).
+</Note>
 
-## Need inspiration?
-
-<Card
-  title="See complete examples"
-  icon="stars"
-  href="https://mintlify.com/customers"
->
-  Browse our showcase of exceptional documentation sites.
-</Card>
+<CardGroup cols={2}>
+  <Card title="Features" icon="sparkles" href="/features/semantic-search">
+    Learn what Codanna can do for your workflow
+  </Card>
+  <Card title="Workflows" icon="route" href="/workflows/tool-tiers">
+    Best practices for using Codanna with AI assistants
+  </Card>
+</CardGroup>

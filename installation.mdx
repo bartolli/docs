@@ -1,0 +1,53 @@
+---
+title: "Installation"
+description: "Install Codanna and index your first project"
+---
+
+## Install
+
+<Tabs>
+  <Tab title="Shell Script">
+    ```bash
+    curl -fsSL --proto '=https' --tlsv1.2 https://install.codanna.sh | sh
+    ```
+    Works on macOS, Linux, and WSL. Downloads pre-built binary.
+  </Tab>
+  <Tab title="Homebrew">
+    ```bash
+    brew install codanna
+    ```
+    Works on macOS and Linux.
+  </Tab>
+</Tabs>
+
+## Quick Start
+
+<Steps>
+  <Step title="Initialize">
+    Navigate to your project and run:
+    ```bash
+    codanna init
+    ```
+  </Step>
+  <Step title="Index your code">
+    ```bash
+    codanna index .
+    ```
+  </Step>
+  <Step title="Search">
+    ```bash
+    codanna mcp semantic_search_docs query:"where do we handle errors" limit:3
+    ```
+  </Step>
+</Steps>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Features" icon="sparkles" href="/features/semantic-search">
+    Learn about semantic search, relationships, and document search.
+  </Card>
+  <Card title="Workflows" icon="arrows-spin" href="/workflows/tool-tiers">
+    Explore different ways to use Codanna in your development workflow.
+  </Card>
+</CardGroup>

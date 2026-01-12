@@ -1,0 +1,56 @@
+---
+title: "Language Support"
+description: "13 programming languages supported"
+---
+
+Codanna uses tree-sitter for parsing, the same technology used by GitHub's code navigator.
+
+## Supported Languages
+
+| Language | Filter |
+|----------|--------|
+| Rust | `lang:rust` |
+| Python | `lang:python` |
+| TypeScript | `lang:typescript` |
+| JavaScript | `lang:javascript` |
+| Java | `lang:java` |
+| Kotlin | `lang:kotlin` |
+| Go | `lang:go` |
+| PHP | `lang:php` |
+| C | `lang:c` |
+| C++ | `lang:cpp` |
+| C# | `lang:csharp` |
+| Swift | `lang:swift` |
+| GDScript | `lang:gdscript` |
+
+## What Gets Extracted
+
+From each language:
+
+- Functions and methods
+- Classes, structs, traits
+- Type definitions
+- Imports and includes
+- Call relationships
+- Type relationships
+- Documentation comments
+
+## Language Filtering
+
+Use `lang:` in searches to filter results:
+
+```bash
+codanna mcp semantic_search_docs query:"error handling" lang:rust
+codanna mcp find_callers auth_handler lang:typescript
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Collaboration" icon="users" href="/features/collaboration">
+    Share configurations with profiles.
+  </Card>
+  <Card title="Tool Tiers" icon="layer-group" href="/workflows/tool-tiers">
+    Learn which tool to use when.
+  </Card>
+</CardGroup>

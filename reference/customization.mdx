@@ -1,0 +1,114 @@
+---
+title: "Customization"
+description: "Settings and configuration"
+---
+
+> Configuration lives in `.codanna/settings.toml`.
+
+## Directory Structure
+
+```
+.codanna/
+├── settings.toml     # Main configuration
+├── index/            # Index storage
+└── .project-id       # Project identifier
+```
+
+## .codannaignore
+
+Codanna respects `.gitignore` and adds its own `.codannaignore`:
+
+```bash
+# Created by codanna init
+.codanna/       # Don't index own data
+target/         # Skip build artifacts
+node_modules/   # Skip dependencies
+```
+
+## Semantic Search Model
+
+```toml
+[semantic_search]
+model = "AllMiniLML6V2"
+```
+
+| Model | Description |
+|:------|:------------|
+| `AllMiniLML6V2` | English-optimized (default) |
+| `MultilingualE5Small` | 94 languages, 384 dimensions |
+| `MultilingualE5Base` | 94 languages, 768 dimensions |
+
+Changing models requires re-indexing:
+
+```bash
+codanna index --force
+```
+
+## Indexed Paths
+
+```toml
+[indexing]
+indexed_paths = [
+    "/path/to/project1",
+    "/path/to/project2"
+]
+```
+
+Manage via CLI:
+
+```bash
+codanna add-dir src
+codanna list-dirs
+codanna remove-dir old-project
+```
+
+## Language Configuration
+
+### TypeScript
+
+```toml
+[languages.typescript]
+enabled = true
+config_files = [
+    "tsconfig.json",
+    "packages/web/tsconfig.json"
+]
+```
+
+Reads `tsconfig.json` to resolve path aliases like `@app/*`.
+
+### Java
+
+```toml
+[languages.java]
+enabled = true
+config_files = [
+    "pom.xml",
+    "module-a/pom.xml"
+]
+```
+
+Reads `pom.xml` for Maven project structure.
+
+## Logging
+
+```toml
+[logging]
+default = "warn"
+
+[logging.modules]
+cli = "debug"
+indexing = "info"
+```
+
+Or via environment:
+
+```bash
+RUST_LOG=debug codanna index
+```
+
+## View Configuration
+
+```bash
+codanna config
+```
