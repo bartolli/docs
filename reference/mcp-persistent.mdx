@@ -13,6 +13,10 @@ codanna serve --watch
 
 The server runs continuously, communicating via stdin/stdout. Use `--watch` to auto-reload when the index changes.
 
+<Note>
+The AI client spawns this server automatically based on your config. Do not start a separate `codanna serve --watch` process—this causes index lock conflicts.
+</Note>
+
 ## Config Path
 
 The `--config .codanna/settings.toml` argument uses a relative path. This works when:
