@@ -13,6 +13,16 @@ codanna serve --watch
 
 The server runs continuously, communicating via stdin/stdout. Use `--watch` to auto-reload when the index changes.
 
+## Config Path
+
+The `--config .codanna/settings.toml` argument uses a relative path. This works when:
+- **Project-scoped configs** (Claude Code, Cursor, OpenCode, Gemini CLI): The client sets the working directory to your project root
+- **Global configs** (Claude Desktop, Goose): You must run the client from your project directory, or use an absolute path
+
+<Warning>
+Run one persistent server per project. Multiple servers with `--watch` on the same `.codanna/` directory will conflict when re-indexing.
+</Warning>
+
 ## Claude Code
 
 Add to `.mcp.json` in your project root:
@@ -102,7 +112,16 @@ OpenCode combines command and arguments into a single array under `command`.
 
 ## Goose
 
-Add to `~/.config/goose/config.yaml`:
+Via CLI:
+
+```bash
+goose configure
+# Select: Add Extension > Command-line Extension
+# Name: codanna
+# Command: codanna --config .codanna/settings.toml serve --watch
+```
+
+Or add to `~/.config/goose/config.yaml`:
 
 ```yaml
 extensions:
@@ -120,26 +139,41 @@ extensions:
 
 ## Gemini CLI
 
-Register via command:
+Via CLI:
 
 ```bash
-gemini mcp add codanna --transport stdio -- codanna --config .codanna/settings.toml serve --watch
+gemini mcp add codanna codanna -- --config .codanna/settings.toml serve --watch
+```
+
+Or add to your `settings.json`:
+
+```json
+{
+  "mcpServers": {
+    "codanna": {
+      "command": "codanna",
+      "args": ["--config", ".codanna/settings.toml", "serve", "--watch"]
+    }
+  }
+}
 ```
 
 ## Options
 
-| Flag | Description | Default |
-|:-----|:------------|:--------|
-| `--watch` | Auto-reload on index changes | off |
-| `--watch-interval <seconds>` | Check interval for changes | 5 |
+| Flag | Description |
+|:-----|:------------|
+| `--watch` | Enable auto-reload with 500ms debounce |
+| `--watch-interval <seconds>` | Check interval for index changes (default: 5) |
 
-## Verification
+## Self-Test
 
-Test the connection:
+Verify Codanna can spawn a server, access the index, and register tools:
 
 ```bash
 codanna mcp-test
 ```
+
+This tests Codanna's MCP capabilities, not the client configurations above.
 
 ## When to Use
 

@@ -34,6 +34,7 @@
             "group": "Workflows",
             "pages": [
               "workflows/tool-tiers",
+              "workflows/agentic-guidance",
               "workflows/piping",
               "contribute"
             ]

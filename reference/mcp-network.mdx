@@ -21,6 +21,18 @@ codanna serve --https --watch
 
 Includes TLS encryption.
 
+## Config Path
+
+When running outside your project directory (common in production), specify the full path:
+
+```bash
+codanna --config /path/to/project/.codanna/settings.toml serve --http --watch
+```
+
+<Warning>
+Run one server per project index. Multiple servers with `--watch` on the same `.codanna/` directory will conflict when re-indexing.
+</Warning>
+
 ## Client Configuration
 
 The same clients from [MCP Persistent](/reference/mcp-persistent) are supported. The difference is the transport type: use `http` with a URL instead of `command`/`args`.
@@ -65,18 +77,34 @@ type = "http"
 url = "http://127.0.0.1:8080/mcp"
 ```
 
+### Gemini CLI
+
+Add to your `settings.json`:
+
+```json
+{
+  "mcpServers": {
+    "codanna": {
+      "url": "https://127.0.0.1:8443/mcp"
+    }
+  }
+}
+```
+
+Gemini CLI auto-discovers OAuth endpoints for HTTPS servers.
+
 ## HTTPS with Self-Signed Certificates
 
 For secure local development with TLS encryption, see the [HTTPS Setup](/reference/https-setup) guide.
 
 ## Options
 
-| Flag | Description | Default |
-|:-----|:------------|:--------|
-| `--http` | HTTP server with OAuth | - |
-| `--https` | HTTPS server with TLS | - |
-| `--bind <addr>` | Address to bind | 127.0.0.1:8080 |
-| `--watch` | Auto-reload on index changes | off |
+| Flag | Description |
+|:-----|:------------|
+| `--http` | Enable HTTP server with OAuth |
+| `--https` | Enable HTTPS server with TLS |
+| `--bind <addr>` | Address to bind (default: 127.0.0.1:8080) |
+| `--watch` | Enable auto-reload with 500ms debounce |
 
 ## Custom Bind Address
 

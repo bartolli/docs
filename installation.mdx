@@ -6,7 +6,7 @@ description: "Install Codanna and index your first project"
 ## Install
 
 <Tabs>
-  <Tab title="Shell Script">
+  <Tab title="Native">
     ```bash
     curl -fsSL --proto '=https' --tlsv1.2 https://install.codanna.sh | sh
     ```
@@ -17,6 +17,16 @@ description: "Install Codanna and index your first project"
     brew install codanna
     ```
     Works on macOS and Linux.
+  </Tab>
+  <Tab title="Cargo">
+    ```bash
+    # From crates.io
+    cargo install codanna --locked
+
+    # Prebuilt binaries (faster)
+    cargo binstall codanna
+    ```
+    Requires [cargo-binstall](https://github.com/cargo-bins/cargo-binstall) for prebuilt binaries.
   </Tab>
 </Tabs>
 
@@ -36,18 +46,26 @@ description: "Install Codanna and index your first project"
   </Step>
   <Step title="Search">
     ```bash
-    codanna mcp semantic_search_docs query:"where do we handle errors" limit:3
+    codanna mcp semantic_search_with_context query:"where do we handle errors" limit:3
     ```
   </Step>
 </Steps>
 
+<Tip>
+**Serving the index:** The MCP server needs access to `.codanna/settings.toml`. Either:
+- Run `codanna serve --watch` from your project root
+- Or use `--config` to specify the path: `codanna --config /path/to/.codanna/settings.toml serve --watch`
+
+See [MCP Persistent](/reference/mcp-persistent) for client configuration.
+</Tip>
+
 ## Next Steps
 
 <CardGroup cols={2}>
-  <Card title="Features" icon="sparkles" href="/features/semantic-search">
-    Learn about semantic search, relationships, and document search.
+  <Card title="Semantic Search" icon="magnifying-glass" href="/features/semantic-search">
+    Search code by concept.
   </Card>
-  <Card title="Workflows" icon="arrows-spin" href="/workflows/tool-tiers">
-    Explore different ways to use Codanna in your development workflow.
+  <Card title="Tool Tiers" icon="layer-group" href="/workflows/tool-tiers">
+    Which tool to use when.
   </Card>
 </CardGroup>

@@ -40,9 +40,13 @@ From each language:
 Use `lang:` in searches to filter results:
 
 ```bash
+codanna mcp semantic_search_docs query:"error handling" lang:typescript
 codanna mcp semantic_search_docs query:"error handling" lang:rust
-codanna mcp find_callers auth_handler lang:typescript
 ```
+
+<Note>
+`lang:` shows only results from that language. Without it, you get the best matches across all languages. Useful in multi-language stacks (frontend/backend) or monorepos.
+</Note>
 
 ## Next Steps
 
@@ -50,7 +54,7 @@ codanna mcp find_callers auth_handler lang:typescript
   <Card title="Collaboration" icon="users" href="/features/collaboration">
     Share configurations with profiles.
   </Card>
-  <Card title="Tool Tiers" icon="layer-group" href="/workflows/tool-tiers">
-    Learn which tool to use when.
+  <Card title="CLI Reference" icon="terminal" href="/reference/cli">
+    Complete command reference.
   </Card>
 </CardGroup>
