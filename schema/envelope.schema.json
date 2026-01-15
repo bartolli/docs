@@ -1,0 +1,440 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://docs.codanna.sh/schema/envelope.schema.json",
+  "title": "Codanna CLI Output Envelope",
+  "description": "Unified JSON output envelope for all Codanna CLI commands (schema version 1.0.0)",
+  "type": "object",
+  "required": ["type", "status", "code", "exit_code", "message", "data", "meta"],
+  "properties": {
+    "type": {
+      "type": "string",
+      "enum": ["result", "error", "begin", "end", "summary"],
+      "description": "Message type. 'result' for success/not_found, 'error' for failures. 'begin'/'end'/'summary' reserved for future streaming."
+    },
+    "status": {
+      "type": "string",
+      "enum": ["success", "not_found", "partial_success", "error"],
+      "description": "Operation outcome."
+    },
+    "code": {
+      "type": "string",
+      "enum": ["OK", "NOT_FOUND", "PARSE_ERROR", "INDEX_ERROR", "INVALID_QUERY", "INTERNAL_ERROR"],
+      "description": "Machine-readable result code."
+    },
+    "exit_code": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 255,
+      "description": "Unix exit code. 0=success, 1=not_found, 2=error."
+    },
+    "message": {
+      "type": "string",
+      "description": "Human-readable description."
+    },
+    "hint": {
+      "type": "string",
+      "description": "AI assistant guidance for next steps. Omitted when not applicable."
+    },
+    "data": {
+      "description": "Result payload. Shape depends on meta.entity_type. Null on error or not_found.",
+      "anyOf": [
+        {"type": "null"},
+        {"$ref": "#/$defs/symbolContext"},
+        {"type": "array", "items": {"$ref": "#/$defs/symbolContext"}},
+        {"type": "array", "items": {"$ref": "#/$defs/symbol"}},
+        {"type": "array", "items": {"$ref": "#/$defs/searchResult"}},
+        {"type": "array", "items": {"$ref": "#/$defs/documentChunk"}},
+        {"$ref": "#/$defs/indexInfo"}
+      ]
+    },
+    "error": {
+      "$ref": "#/$defs/errorDetails",
+      "description": "Error details when status is 'error'. Omitted on success."
+    },
+    "meta": {
+      "$ref": "#/$defs/meta"
+    }
+  },
+  "$defs": {
+    "meta": {
+      "type": "object",
+      "required": ["schema_version"],
+      "properties": {
+        "schema_version": {
+          "type": "string",
+          "pattern": "^\\d+\\.\\d+\\.\\d+$",
+          "description": "Schema version (semver).",
+          "const": "1.0.0"
+        },
+        "entity_type": {
+          "type": "string",
+          "enum": ["symbol", "search_result", "call_tree", "impact_graph", "document", "callers", "calls"],
+          "description": "Type of entities in data payload."
+        },
+        "count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of items in data."
+        },
+        "query": {
+          "type": "string",
+          "description": "Original query string."
+        },
+        "lang": {
+          "type": "string",
+          "description": "Language filter applied (e.g., 'rust', 'python', 'typescript')."
+        },
+        "duration_ms": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Execution time in milliseconds."
+        },
+        "truncated": {
+          "type": "boolean",
+          "description": "True if results were limited."
+        },
+        "depth": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Traversal depth for tree/graph results."
+        }
+      }
+    },
+    "errorDetails": {
+      "type": "object",
+      "properties": {
+        "suggestions": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Recovery suggestions (e.g., alternative symbol_ids)."
+        },
+        "context": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "symbol_id": {"type": "integer"},
+              "file_path": {"type": "string"},
+              "kind": {"type": "string"},
+              "line": {"type": "integer"}
+            }
+          },
+          "description": "Context for disambiguation."
+        }
+      }
+    },
+    "symbolContext": {
+      "type": "object",
+      "description": "Symbol with file path and relationships (find_symbol, semantic_search_with_context).",
+      "required": ["symbol", "file_path", "relationships"],
+      "properties": {
+        "symbol": {"$ref": "#/$defs/symbol"},
+        "file_path": {
+          "type": "string",
+          "description": "Resolved file path."
+        },
+        "score": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Similarity score for semantic search results."
+        },
+        "context": {
+          "type": "object",
+          "description": "Additional context (semantic_search_with_context).",
+          "properties": {
+            "file_path": {"type": "string"},
+            "relationships": {"$ref": "#/$defs/relationships"}
+          }
+        },
+        "relationships": {"$ref": "#/$defs/relationships"}
+      }
+    },
+    "symbol": {
+      "type": "object",
+      "description": "Core symbol structure.",
+      "required": ["id", "name", "kind", "file_id", "range", "file_path", "visibility"],
+      "properties": {
+        "id": {
+          "type": "integer",
+          "description": "Unique symbol ID within the index."
+        },
+        "name": {
+          "type": "string",
+          "description": "Symbol name."
+        },
+        "kind": {
+          "type": "string",
+          "enum": ["Function", "Method", "Struct", "Enum", "Trait", "Interface", "Class", "Module", "Variable", "Constant", "Field", "Parameter", "TypeAlias", "Macro"],
+          "description": "Symbol kind."
+        },
+        "file_id": {
+          "type": "integer",
+          "description": "Internal file ID."
+        },
+        "range": {"$ref": "#/$defs/range"},
+        "file_path": {
+          "type": "string",
+          "description": "Relative file path."
+        },
+        "signature": {
+          "type": ["string", "null"],
+          "description": "Function/method signature."
+        },
+        "doc_comment": {
+          "type": ["string", "null"],
+          "description": "Documentation comment."
+        },
+        "module_path": {
+          "type": ["string", "null"],
+          "description": "Fully qualified module path (e.g., 'crate::io::envelope')."
+        },
+        "visibility": {
+          "type": "string",
+          "enum": ["Public", "Crate", "Module", "Private"],
+          "description": "Symbol visibility."
+        },
+        "scope_context": {
+          "description": "Where the symbol is defined.",
+          "oneOf": [
+            {"type": "string", "enum": ["Module", "Parameter"]},
+            {
+              "type": "object",
+              "required": ["Local"],
+              "additionalProperties": false,
+              "properties": {
+                "Local": {
+                  "type": "object",
+                  "properties": {
+                    "hoisted": {"type": "boolean"},
+                    "parent_name": {"type": ["string", "null"]},
+                    "parent_kind": {"type": ["string", "null"]}
+                  }
+                }
+              }
+            },
+            {
+              "type": "object",
+              "required": ["ClassMember"],
+              "additionalProperties": false,
+              "properties": {
+                "ClassMember": {
+                  "type": "object",
+                  "properties": {
+                    "class_name": {"type": ["string", "null"]}
+                  }
+                }
+              }
+            }
+          ]
+        },
+        "language_id": {
+          "type": ["string", "null"],
+          "description": "Language identifier (e.g., 'rust', 'python', 'typescript')."
+        }
+      }
+    },
+    "range": {
+      "type": "object",
+      "required": ["start_line", "start_column", "end_line", "end_column"],
+      "properties": {
+        "start_line": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Start line (0-indexed)."
+        },
+        "start_column": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Start column (0-indexed)."
+        },
+        "end_line": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "End line (0-indexed)."
+        },
+        "end_column": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "End column (0-indexed)."
+        }
+      }
+    },
+    "relationships": {
+      "type": "object",
+      "description": "Symbol relationships.",
+      "properties": {
+        "implements": {
+          "type": ["array", "null"],
+          "items": {"$ref": "#/$defs/symbol"},
+          "description": "Traits/interfaces this symbol implements."
+        },
+        "implemented_by": {
+          "type": ["array", "null"],
+          "items": {"$ref": "#/$defs/symbol"},
+          "description": "Types that implement this trait/interface."
+        },
+        "extends": {
+          "type": ["array", "null"],
+          "items": {"$ref": "#/$defs/symbol"},
+          "description": "Base classes this symbol extends."
+        },
+        "extended_by": {
+          "type": ["array", "null"],
+          "items": {"$ref": "#/$defs/symbol"},
+          "description": "Classes that extend this base class."
+        },
+        "uses": {
+          "type": ["array", "null"],
+          "items": {"$ref": "#/$defs/symbol"},
+          "description": "Types this symbol uses."
+        },
+        "used_by": {
+          "type": ["array", "null"],
+          "items": {"$ref": "#/$defs/symbol"},
+          "description": "Symbols that use this type."
+        },
+        "defines": {
+          "type": ["array", "null"],
+          "items": {"$ref": "#/$defs/symbol"},
+          "description": "Methods/fields this symbol defines."
+        },
+        "calls": {
+          "type": ["array", "null"],
+          "items": {
+            "type": "array",
+            "prefixItems": [
+              {"$ref": "#/$defs/symbol"},
+              {"$ref": "#/$defs/relationshipMetadata"}
+            ],
+            "minItems": 2,
+            "maxItems": 2
+          },
+          "description": "Functions this symbol calls (with call site metadata)."
+        },
+        "called_by": {
+          "type": ["array", "null"],
+          "items": {
+            "type": "array",
+            "prefixItems": [
+              {"$ref": "#/$defs/symbol"},
+              {"$ref": "#/$defs/relationshipMetadata"}
+            ],
+            "minItems": 2,
+            "maxItems": 2
+          },
+          "description": "Functions that call this symbol (with call site metadata)."
+        }
+      }
+    },
+    "relationshipMetadata": {
+      "type": ["object", "null"],
+      "properties": {
+        "line": {
+          "type": "integer",
+          "description": "Call site line number."
+        },
+        "context": {
+          "type": "string",
+          "description": "Additional context (e.g., receiver type)."
+        }
+      }
+    },
+    "searchResult": {
+      "type": "object",
+      "description": "Search result with nested symbol (search_symbols).",
+      "required": ["symbol"],
+      "properties": {
+        "symbol": {"$ref": "#/$defs/symbolCompact"},
+        "score": {
+          "type": "number",
+          "description": "Search relevance score."
+        },
+        "highlights": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Matched text fragments."
+        }
+      }
+    },
+    "symbolCompact": {
+      "type": "object",
+      "description": "Compact symbol for search results.",
+      "required": ["id", "name", "kind", "file_path"],
+      "properties": {
+        "id": {"type": "integer"},
+        "name": {"type": "string"},
+        "kind": {"type": "string"},
+        "file_path": {"type": "string"},
+        "line": {"type": "integer", "description": "Start line (1-indexed)."},
+        "column": {"type": "integer", "description": "Start column."},
+        "signature": {"type": ["string", "null"]},
+        "module_path": {"type": ["string", "null"]}
+      }
+    },
+    "documentChunk": {
+      "type": "object",
+      "description": "Document search result chunk.",
+      "required": ["chunk_id", "collection", "source_path", "content_preview", "similarity"],
+      "properties": {
+        "chunk_id": {
+          "type": "integer",
+          "description": "Chunk identifier."
+        },
+        "collection": {
+          "type": "string",
+          "description": "Collection name."
+        },
+        "source_path": {
+          "type": "string",
+          "description": "Source document path."
+        },
+        "heading_context": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Heading hierarchy."
+        },
+        "content_preview": {
+          "type": "string",
+          "description": "Matched content with highlights."
+        },
+        "byte_range": {
+          "type": "array",
+          "items": {"type": "integer"},
+          "minItems": 2,
+          "maxItems": 2,
+          "description": "Byte range [start, end] in source file."
+        },
+        "similarity": {
+          "type": "number",
+          "description": "Similarity score."
+        }
+      }
+    },
+    "indexInfo": {
+      "type": "object",
+      "description": "Index statistics (get_index_info).",
+      "required": ["symbol_count", "file_count"],
+      "properties": {
+        "symbol_count": {"type": "integer"},
+        "file_count": {"type": "integer"},
+        "relationship_count": {"type": "integer"},
+        "languages": {
+          "type": "object",
+          "additionalProperties": {"type": "integer"}
+        },
+        "document_collections": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {"type": "string"},
+              "document_count": {"type": "integer"},
+              "chunk_count": {"type": "integer"}
+            }
+          }
+        }
+      }
+    }
+  }
+}

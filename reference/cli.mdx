@@ -31,6 +31,7 @@ description: "Commands, flags, and options"
 | `-h, --help` | Print help | `codanna --help` |
 | `-V, --version` | Print version | `codanna --version` |
 | `--json` | Output in JSON format (retrieve, mcp, documents) | `codanna retrieve symbol Parser --json` |
+| `--fields` | Filter JSON output to specific data fields (requires --json) | `codanna mcp find_symbol name:Parser --json --fields name,file_path` |
 | `--dry-run` | Preview without making changes (index) | `codanna index src --dry-run` |
 | `-f, --force` | Force operation (init, index) | `codanna index --force` |
 
@@ -102,6 +103,8 @@ See [Collaboration](/features/collaboration) for details.
 
 | Code | Meaning |
 |:-----|:--------|
-| `0` | Success |
-| `1` | General error |
-| `3` | Not found (retrieve commands) |
+| `0` | Success with results |
+| `1` | Not found (no results) |
+| `2` | Error (invalid query, parse error, etc.) |
+
+See [Unix Piping](/workflows/piping) for JSON envelope schema details.
