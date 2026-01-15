@@ -64,6 +64,14 @@ codanna remove-dir old-project
 
 ## Language Configuration
 
+Project resolution reads build configuration files to determine source roots and module paths. This enables:
+
+- Correct module path generation (e.g., `org.example.service` for Java, `Core` for Swift)
+- Path alias resolution (e.g., `@app/*` in TypeScript)
+- Cross-package relationship tracking
+
+Resolution rules are cached in `.codanna/index/resolvers/`. The cache rebuilds during `codanna index` when config file contents change (SHA-based invalidation).
+
 ### TypeScript
 
 ```toml
@@ -75,7 +83,7 @@ config_files = [
 ]
 ```
 
-Reads `tsconfig.json` to resolve path aliases like `@app/*`.
+Reads `tsconfig.json` to resolve path aliases like `@app/*` and `baseUrl` settings.
 
 ### Java
 
@@ -84,11 +92,24 @@ Reads `tsconfig.json` to resolve path aliases like `@app/*`.
 enabled = true
 config_files = [
     "pom.xml",
-    "module-a/pom.xml"
+    "build.gradle"
 ]
 ```
 
-Reads `pom.xml` for Maven project structure.
+Reads Maven `pom.xml` or Gradle `build.gradle` to detect source roots (`src/main/java`, `src/test/java`). Generates module paths like `org.springframework.samples.petclinic.owner`.
+
+### Swift
+
+```toml
+[languages.swift]
+enabled = true
+config_files = [
+    "Package.swift",
+    "modules/networking/Package.swift"
+]
+```
+
+Reads Swift Package Manager `Package.swift` to detect source roots. Uses SPM conventions (`Sources/`, `Tests/`) or custom `path:` specifications. Generates module paths like `Networking`, `Cache`, `General`.
 
 ## Logging
 
