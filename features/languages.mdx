@@ -48,11 +48,28 @@ codanna mcp semantic_search_docs query:"error handling" lang:rust
 `lang:` shows only results from that language. Without it, you get the best matches across all languages. Useful in multi-language stacks (frontend/backend) or monorepos.
 </Note>
 
+## Project Resolvers
+
+8 languages support project-aware module path resolution by reading build configuration files:
+
+| Language | Config File |
+|:---------|:------------|
+| Go | `go.mod` |
+| Python | `pyproject.toml` (Poetry, Hatch, Maturin, Setuptools, PDM, Flit) |
+| Kotlin | `build.gradle.kts` |
+| Java | `pom.xml`, `build.gradle` |
+| PHP | `composer.json` (PSR-4) |
+| C# | `.csproj` |
+| TypeScript | `tsconfig.json` |
+| Swift | `Package.swift` |
+
+This enables correct cross-file relationship tracking and import resolution.
+
 ## Next Steps
 
 <CardGroup cols={2}>
-  <Card title="Collaboration" icon="users" href="/features/collaboration">
-    Share configurations with profiles.
+  <Card title="Project Resolvers" icon="diagram-project" href="/reference/project-resolvers">
+    Configure module path resolution.
   </Card>
   <Card title="CLI Reference" icon="terminal" href="/reference/cli">
     Complete command reference.
