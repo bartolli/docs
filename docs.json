@@ -54,6 +54,7 @@
               "reference/mcp-network",
               "reference/https-setup",
               "reference/customization",
+              "reference/project-resolvers",
               "reference/debugging"
             ]
           }
