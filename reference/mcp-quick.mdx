@@ -43,6 +43,15 @@ codanna mcp search_symbols query:parse --json | jq '.data[].name'
 | Continuous AI assistant use | [MCP Persistent](/reference/mcp-persistent) |
 | Multiple clients | [MCP Network](/reference/mcp-network) |
 
+## Flags
+
+| Flag | Description |
+|:-----|:------------|
+| `--json` | Output in JSON format |
+| `--fields <fields>` | Filter JSON output to specific data fields |
+| `--watch` | Check for file changes and reindex before running |
+| `--args <json>` | Pass arguments as a JSON string |
+
 ## Available Tools
 
 See [CLI Reference](/reference/cli#mcp-tools) for the complete tool list.

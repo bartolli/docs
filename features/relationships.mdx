@@ -27,6 +27,17 @@ codanna mcp find_callers symbol_id:1883
 
 Returns functions that invoke the target.
 
+## Find Implementations
+
+See what types implement a trait:
+
+```bash
+codanna mcp find_symbol LanguageParser
+codanna retrieve implementations LanguageParser
+```
+
+Returns all structs that implement the given trait, with their definitions and relationships.
+
 ## Analyze Impact
 
 Map the full impact radius of a symbol:

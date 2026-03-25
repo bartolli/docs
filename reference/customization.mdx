@@ -25,7 +25,9 @@ target/         # Skip build artifacts
 node_modules/   # Skip dependencies
 ```
 
-## Semantic Search Model
+## Semantic Search
+
+### Local Models
 
 ```toml
 [semantic_search]
@@ -38,7 +40,31 @@ model = "AllMiniLML6V2"
 | `MultilingualE5Small` | 94 languages, 384 dimensions |
 | `MultilingualE5Base` | 94 languages, 768 dimensions |
 
-Changing models requires re-indexing:
+### Remote Embedding Backend
+
+Use an OpenAI-compatible HTTP server instead of local models:
+
+```toml
+[semantic_search]
+remote_url = "http://localhost:11434"
+remote_model = "nomic-embed-text"
+remote_dim = 768
+```
+
+Or override via environment variables (take precedence over config):
+
+| Variable | Description |
+|:---------|:------------|
+| `CODANNA_EMBED_URL` | Server base URL (enables remote mode) |
+| `CODANNA_EMBED_MODEL` | Model name to send to the server |
+| `CODANNA_EMBED_DIM` | Expected output dimension |
+| `CODANNA_EMBED_API_KEY` | Bearer auth token (env var only, not stored in config) |
+
+See [Semantic Search](/features/semantic-search#remote-embedding-backend) for provider examples and migration details.
+
+### Changing Models
+
+Switching between local models or between local and remote requires re-indexing:
 
 ```bash
 codanna index --force

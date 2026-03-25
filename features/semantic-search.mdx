@@ -148,6 +148,66 @@ Use threshold to filter weak results:
 codanna mcp semantic_search_docs query:"validation" threshold:0.5
 ```
 
+## Remote Embedding Backend
+
+Use an OpenAI-compatible HTTP embedding server instead of the local fastembed model. Supports OpenAI, Ollama, vLLM, Infinity, and any server implementing `POST /v1/embeddings`.
+
+### Configuration
+
+Set environment variables to enable remote mode:
+
+```bash
+export CODANNA_EMBED_URL=http://localhost:11434    # Server base URL
+export CODANNA_EMBED_MODEL=nomic-embed-text        # Model name
+export CODANNA_EMBED_DIM=768                        # Output dimension
+```
+
+For servers requiring authentication (OpenAI, cloud providers):
+
+```bash
+export CODANNA_EMBED_API_KEY=sk-...
+```
+
+Or configure in `settings.toml` (except the API key, which is env-var only):
+
+```toml
+[semantic_search]
+remote_url = "http://localhost:11434"
+remote_model = "nomic-embed-text"
+remote_dim = 768
+```
+
+Environment variables take precedence over `settings.toml`.
+
+<Warning>
+API keys are read from `CODANNA_EMBED_API_KEY` only. They are intentionally not stored in config files, which may be team-shared via profiles.
+</Warning>
+
+### Switching Between Local and Remote
+
+When you change embedding backends, the stored index dimension may not match the new backend. Codanna detects this and disables semantic search with an error:
+
+```text
+ERROR: semantic search disabled -- index incompatible:
+Index was built with 384-dimensional embeddings but current backend produces 768d.
+Re-index with: codanna index <path> --force
+```
+
+Re-index with `--force` to rebuild with the new backend:
+
+```bash
+codanna index --force
+```
+
+### Tested Providers
+
+| Provider | Model | Dimensions | Auth |
+|:---------|:------|:-----------|:-----|
+| Ollama | nomic-embed-text | 768 | None |
+| OpenAI | text-embedding-3-small | 1536 | Bearer token |
+| vLLM | Any supported model | Varies | Optional |
+| Infinity | Any supported model | Varies | Optional |
+
 ## Next Steps
 
 <CardGroup cols={2}>

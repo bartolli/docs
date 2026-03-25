@@ -3,37 +3,51 @@ title: "CLI Reference"
 description: "Commands, flags, and options"
 ---
 
-> Complete reference for Codanna command-line interface, including commands and flags.
+> Complete reference for Codanna command-line interface.
 
-## CLI Commands
+## Global Flags
+
+These flags work on every command:
+
+| Flag | Description |
+|:-----|:------------|
+| `-c, --config <path>` | Path to custom settings.toml |
+| `--info` | Show detailed loading information |
+| `-h, --help` | Print help |
+| `-V, --version` | Print version |
+
+## Commands
 
 | Command | Description | Example |
 |:--------|:------------|:--------|
 | `codanna init` | Set up `.codanna` directory with configuration | `codanna init` |
-| `codanna index <paths>` | Build searchable index from codebase | `codanna index src lib` |
-| `codanna index` | Index using configured paths | `codanna index` |
+| `codanna index [paths]` | Build searchable index from codebase | `codanna index src lib` |
 | `codanna add-dir <path>` | Add folder to indexed paths | `codanna add-dir src` |
 | `codanna remove-dir <path>` | Remove folder from indexed paths | `codanna remove-dir old-project` |
 | `codanna list-dirs` | List configured indexed directories | `codanna list-dirs` |
 | `codanna retrieve <subcommand>` | Query symbols and relationships | `codanna retrieve symbol Parser` |
 | `codanna mcp <tool>` | Execute MCP tools directly | `codanna mcp find_symbol main` |
+| `codanna mcp-test` | Test MCP connection and list tools | `codanna mcp-test --tool find_symbol` |
 | `codanna serve` | Start MCP server | `codanna serve --watch` |
 | `codanna documents <subcommand>` | Manage document collections | `codanna documents search "auth flow"` |
 | `codanna profile <subcommand>` | Manage workspace profiles | `codanna profile install claude` |
 | `codanna config` | Display active settings | `codanna config` |
 | `codanna parse <file>` | Output AST as JSONL | `codanna parse src/main.rs` |
+| `codanna benchmark [language]` | Benchmark parser performance | `codanna benchmark rust` |
 
-## CLI Flags
+## Index Flags
 
-| Flag | Description | Example |
+| Flag | Description | Default |
 |:-----|:------------|:--------|
-| `-c, --config <path>` | Path to custom settings.toml | `codanna --config ./custom.toml index` |
-| `-h, --help` | Print help | `codanna --help` |
-| `-V, --version` | Print version | `codanna --version` |
-| `--json` | Output in JSON format (retrieve, mcp, documents) | `codanna retrieve symbol Parser --json` |
-| `--fields` | Filter JSON output to specific data fields (requires --json) | `codanna mcp find_symbol name:Parser --json --fields name,file_path` |
-| `--dry-run` | Preview without making changes (index) | `codanna index src --dry-run` |
-| `-f, --force` | Force operation (init, index) | `codanna index --force` |
+| `-f, --force` | Force re-indexing even if index exists | |
+| `-t, --threads <N>` | Number of threads (overrides `indexing.parallelism` in config) | All CPU cores |
+| `--no-progress` | Disable progress bars | Progress enabled |
+| `--dry-run` | Preview what would be indexed without indexing | |
+| `--max-files <N>` | Maximum number of files to index | |
+
+<Warning>
+`--force` with CLI paths clears the entire index but only rebuilds the specified paths. Other configured paths are not rebuilt. Run `codanna index --force` without paths to rebuild everything.
+</Warning>
 
 ## Retrieve Subcommands
 
@@ -42,10 +56,28 @@ description: "Commands, flags, and options"
 | `symbol <name>` | Find symbol by name or `symbol_id:ID` | `codanna retrieve symbol Parser` |
 | `calls <name>` | Functions called by a function | `codanna retrieve calls symbol_id:1883` |
 | `callers <name>` | Functions that call a function | `codanna retrieve callers process_file` |
+| `implementations <name>` | Types that implement a trait | `codanna retrieve implementations LanguageParser` |
 | `describe <name>` | Full details: signature, docs, relationships | `codanna retrieve describe SimpleIndexer` |
-| `search <query>` | Full-text search | `codanna retrieve search "config"` |
+| `search <query>` | Full-text search with filters | `codanna retrieve search "config" --kind function` |
 
-All retrieve subcommands support `--json` and `lang:<language>` filter.
+All retrieve subcommands support:
+- `--json` for JSON output
+- `--fields <fields>` to filter JSON output to specific data fields
+- `lang:<language>` filter (e.g., `lang:rust`)
+
+### Retrieve Search Filters
+
+| Flag | Description | Example |
+|:-----|:------------|:--------|
+| `-l, --limit <N>` | Maximum number of results | `--limit 20` |
+| `-k, --kind <kind>` | Filter by symbol kind | `--kind function` |
+| `-m, --module <path>` | Filter by module path | `--module crate::parsing` |
+
+Filters also work as key:value pairs:
+
+```bash
+codanna retrieve search query:parse limit:5 kind:function
+```
 
 ## MCP Tools
 
@@ -63,14 +95,40 @@ All retrieve subcommands support `--json` and `lang:<language>` filter.
 
 See [Tool Tiers](/workflows/tool-tiers) for recommended usage patterns.
 
+### MCP Flags
+
+| Flag | Description |
+|:-----|:------------|
+| `--json` | Output in JSON format |
+| `--fields <fields>` | Filter JSON output to specific data fields |
+| `--watch` | Check for file changes and reindex before running the tool |
+| `--args <json>` | Pass tool arguments as a JSON string |
+
+## MCP Test
+
+Test MCP server connectivity and tool execution:
+
+| Flag | Description | Default |
+|:-----|:------------|:--------|
+| `--tool <name>` | Tool to call (omit to list available tools) | |
+| `--args <json>` | Tool arguments as JSON | |
+| `--server-binary <path>` | Path to server binary | Current binary |
+| `--delay <seconds>` | Wait before calling the tool | |
+
+```bash
+codanna mcp-test
+codanna mcp-test --tool find_symbol --args '{"name":"main"}'
+```
+
 ## Serve Options
 
-| Flag | Description | Example |
+| Flag | Description | Default |
 |:-----|:------------|:--------|
-| `--watch` | Enable auto-reload with 500ms debounce | `codanna serve --watch` |
-| `--http` | Enable HTTP server with OAuth | `codanna serve --http` |
-| `--https` | Enable HTTPS server with TLS | `codanna serve --https` |
-| `--bind <addr>` | Address to bind (default: 127.0.0.1:8080) | `codanna serve --http --bind 0.0.0.0:8080` |
+| `--watch` | Enable hot-reload when index changes | |
+| `--watch-interval <N>` | Seconds between change checks | 5 |
+| `--http` | Enable HTTP server with OAuth | |
+| `--https` | Enable HTTPS server with TLS | |
+| `--bind <addr>` | Address to bind HTTP/HTTPS server | 127.0.0.1:8080 |
 
 ## Documents Subcommands
 
@@ -78,10 +136,23 @@ See [Tool Tiers](/workflows/tool-tiers) for recommended usage patterns.
 |:-----------|:------------|:--------|
 | `add-collection <name> <path>` | Add document collection | `codanna documents add-collection docs docs/` |
 | `remove-collection <name>` | Remove document collection | `codanna documents remove-collection docs` |
-| `index` | Index all collections | `codanna documents index` |
+| `index` | Index collections | `codanna documents index` |
 | `search <query>` | Search indexed documents | `codanna documents search "auth flow"` |
 | `list` | List all collections | `codanna documents list` |
 | `stats <name>` | Show collection statistics | `codanna documents stats docs` |
+
+### Documents Flags
+
+| Flag | Subcommands | Description |
+|:-----|:------------|:------------|
+| `--collection <name>` | index, search | Filter to a specific collection |
+| `--all` | index | Index all configured collections |
+| `-f, --force` | index | Force re-indexing of all files |
+| `--no-progress` | index | Disable progress bars |
+| `-l, --limit <N>` | search | Maximum results to return |
+| `-p, --pattern <glob>` | add-collection | Glob pattern for file matching (default: `**/*.md`) |
+| `--json` | search, list, stats | Output in JSON format |
+| `--fields <fields>` | search | Filter JSON output to specific data fields |
 
 See [Document Search](/features/document-search) for details.
 
@@ -89,15 +160,59 @@ See [Document Search](/features/document-search) for details.
 
 | Subcommand | Description | Example |
 |:-----------|:------------|:--------|
-| `provider add <source>` | Register provider | `codanna profile provider add bartolli/codanna-profiles` |
-| `list` | List available profiles | `codanna profile list --verbose` |
+| `init <name>` | Initialize project with a profile | `codanna profile init claude` |
 | `install <name>` | Install profile to workspace | `codanna profile install claude` |
+| `list` | List available profiles | `codanna profile list --verbose` |
 | `status` | Show installed profiles | `codanna profile status` |
-| `sync` | Install from lockfile | `codanna profile sync` |
+| `sync` | Install from team configuration | `codanna profile sync` |
 | `update <name>` | Update installed profile | `codanna profile update claude` |
 | `remove <name>` | Remove profile | `codanna profile remove claude` |
+| `verify [name]` | Verify profile integrity | `codanna profile verify claude` |
+| `provider add <source>` | Register provider | `codanna profile provider add bartolli/codanna-profiles` |
+| `provider remove <id>` | Remove provider | `codanna profile provider remove codanna-profiles` |
+| `provider list` | List registered providers | `codanna profile provider list --verbose` |
+
+### Profile Install Flags
+
+| Flag | Description |
+|:-----|:------------|
+| `--source <source>` | Profile source (git URL or local directory) |
+| `--ref <ref>` | Git reference (branch, tag, or commit SHA) |
+| `-f, --force` | Force installation even if profile exists |
 
 See [Collaboration](/features/collaboration) for details.
+
+## Parse Flags
+
+| Flag | Description | Default |
+|:-----|:------------|:--------|
+| `-o, --output <path>` | Output file | stdout |
+| `-d, --max-depth <N>` | Maximum depth to traverse | |
+| `-a, --all-nodes` | Include all nodes (default: named nodes only) | |
+
+## Benchmark
+
+Benchmark parser performance for one or all languages:
+
+```bash
+codanna benchmark                  # All languages
+codanna benchmark rust             # Single language
+codanna benchmark --file src/lib.rs  # Custom file
+```
+
+Supported: rust, python, php, typescript, go, csharp, all.
+
+## Key:Value Arguments
+
+Retrieve, MCP, and documents commands accept arguments as key:value pairs:
+
+```bash
+codanna retrieve search query:parse limit:5 kind:function
+codanna mcp semantic_search_docs query:"error handling" limit:3 lang:rust
+codanna documents search query:"auth" limit:5 collection:docs
+```
+
+This format is equivalent to using flags and works alongside them.
 
 ## Exit Codes
 
