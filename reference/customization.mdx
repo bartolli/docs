@@ -119,10 +119,10 @@ Many TypeScript codebases define functions through higher-order wrappers: `const
 
 ```toml
 [languages.typescript.parser_options]
-function_wrappers = ["memo", "forwardRef", "wrap"]
+function_wrappers = ["memo", "forwardRef", "Effect.gen", "Effect.fn"]
 ```
 
-- Matching is by callee name; `memo` also matches `React.memo`. Curried chains (`wrap("name")(fn)`) resolve through the innermost callee.
+- A declared name matches a member expression's full dotted text (`Effect.gen` matches `Effect.gen(...)` only) or its final property name (`memo` matches both `memo(...)` and `React.memo(...)`). Curried chains (`Effect.fn("name")(fn)`) resolve through the innermost callee.
 - Calls inside the wrapped body attribute to the binding, so `find_callers`, `get_calls`, and `analyze_impact` cover wrapper-defined functions.
 - The list is empty by default; indexing behavior is unchanged until you declare names.
 - After editing the list, run `codanna index --force` — changing parser options changes what the index contains, and the emission gate does not detect configuration edits.
