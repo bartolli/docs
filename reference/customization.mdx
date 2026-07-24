@@ -113,6 +113,22 @@ config_files = [
 
 Reads `tsconfig.json` to resolve path aliases like `@app/*` and `baseUrl` settings.
 
+#### Function wrappers
+
+Many TypeScript codebases define functions through higher-order wrappers: `const View = memo(() => {})`, `const Input = forwardRef((props, ref) => {})`, `const load = wrap("load")(function* () {})`. By default the parser records these bindings as constants because the value is a call expression, so they carry no call graph. Declare the wrapper callee names to register such bindings as functions and index the wrapped body:
+
+```toml
+[languages.typescript.parser_options]
+function_wrappers = ["memo", "forwardRef", "wrap"]
+```
+
+- Matching is by callee name; `memo` also matches `React.memo`. Curried chains (`wrap("name")(fn)`) resolve through the innermost callee.
+- Calls inside the wrapped body attribute to the binding, so `find_callers`, `get_calls`, and `analyze_impact` cover wrapper-defined functions.
+- The list is empty by default; indexing behavior is unchanged until you declare names.
+- After editing the list, run `codanna index --force` — changing parser options changes what the index contains, and the emission gate does not detect configuration edits.
+
+A value that is not an array of strings fails `codanna index` with an error naming this key.
+
 ### Java
 
 ```toml

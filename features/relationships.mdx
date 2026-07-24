@@ -72,11 +72,13 @@ codanna mcp analyze_impact symbol_id:567
 
 ## Language Filtering
 
-Filter relationship results by language:
+Relationship tools take a symbol name or `symbol_id`, not a `lang:` filter — `lang:` applies to search tools (`find_symbol`, `search_symbols`, `semantic_search_docs`, `semantic_search_with_context`). To narrow by language, filter at the search step, then feed the resolved `symbol_id` to the relationship tool:
 
 ```bash
-codanna mcp find_callers auth_handler lang:typescript
-codanna mcp analyze_impact Parser lang:rust
+codanna mcp find_symbol name:auth_handler lang:typescript --json
+# Returns: auth_handler [symbol_id:890]
+
+codanna mcp find_callers symbol_id:890
 ```
 
 ## Next Steps

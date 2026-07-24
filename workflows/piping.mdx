@@ -16,7 +16,7 @@ All `--json` output follows a consistent envelope structure (schema version 1.0.
   "code": "OK",
   "exit_code": 0,
   "message": "Found 1 symbol(s)",
-  "hint": "Symbol found with full context...",
+  "hint": "Symbol found with full context. Explore 'get_calls' to see what it calls, 'find_callers' to see usage, or 'analyze_impact' to understand change implications.",
   "data": [...],
   "meta": {
     "schema_version": "1.0.0",
@@ -49,38 +49,45 @@ All `--json` output follows a consistent envelope structure (schema version 1.0.
 | `1` | `not_found` | No results found |
 | `2` | `error` | Operation failed |
 
+<Note>
+One exit code carries no envelope: a stale index (built by a binary with different output semantics) refuses with exit `7` and the heal command on stderr — stdout stays empty, so `jq` receives no input. Gate scripts on the exit code, not only on parsed output.
+</Note>
+
 ## Field Filtering
 
-Use `--fields` to select specific fields from data items, reducing output size for piping:
+Use `--fields` to project `data` items down to the keys you need. Entries are top-level keys or dotted paths into nested values (`symbol.name`); output preserves nesting. Top-level shapes differ per tool: `find_symbol` items carry `symbol`, `file_path`, and `relationships`; `search_symbols` items carry `symbol`, `score`, and `highlights`. A field whose first segment does not exist at the item's top level is rejected with an `INVALID_QUERY` error envelope listing the available fields (exit `2`). A deeper segment missing on an individual item omits that leaf for that item only.
 
 ```bash
-codanna mcp find_symbol name:Envelope --json --fields name,file_path,line
+codanna mcp find_symbol name:Envelope --json --fields symbol.name,file_path
 ```
 
 Output:
 ```json
 {
-  "type": "result",
-  "status": "success",
   "code": "OK",
-  "exit_code": 0,
-  "message": "Found 1 symbol(s)",
-  "hint": "Symbol found with full context...",
   "data": [
     {
-      "file_path": "src/io/envelope.rs"
+      "file_path": "src/io/envelope.rs",
+      "symbol": {
+        "name": "Envelope"
+      }
     }
   ],
+  "exit_code": 0,
+  "hint": "Symbol found with full context. Explore 'get_calls' to see what it calls, 'find_callers' to see usage, or 'analyze_impact' to understand change implications.",
+  "message": "Found 1 symbol(s)",
   "meta": {
-    "schema_version": "1.0.0",
-    "entity_type": "symbol",
     "count": 1,
-    "query": "Envelope"
-  }
+    "entity_type": "symbol",
+    "query": "Envelope",
+    "schema_version": "1.0.0"
+  },
+  "status": "success",
+  "type": "result"
 }
 ```
 
-The envelope structure (type, status, code, meta) is always included. Only `data` items are filtered.
+The envelope structure (type, status, code, meta) is always included. Only `data` items are filtered; projected output serializes keys alphabetically.
 
 Available with: `codanna mcp <tool> --json --fields` and `codanna retrieve <subcommand> --json --fields`
 
@@ -98,25 +105,27 @@ codanna retrieve callers parse --json
   "status": "error",
   "code": "INVALID_QUERY",
   "exit_code": 2,
-  "message": "Ambiguous: found 100 symbol(s) named 'parse'",
+  "message": "Ambiguous: found 32 symbol(s) named 'parse'",
   "hint": "Use: codanna retrieve callers symbol_id:<id>",
   "data": null,
   "error": {
     "suggestions": [
-      "symbol_id:587",
-      "symbol_id:3702"
+      "symbol_id:1581",
+      "symbol_id:3975"
     ],
     "context": [
       {
-        "file_path": "src/parsing/c/parser.rs",
+        "file_path": "src/parsing/swift/parser.rs",
         "kind": "Method",
-        "line": 43,
-        "symbol_id": 587
+        "line": 1653,
+        "symbol_id": 1581
       }
     ]
   },
   "meta": {
-    "schema_version": "1.0.0"
+    "schema_version": "1.0.0",
+    "entity_type": "callers",
+    "query": "parse"
   }
 }
 ```
@@ -134,7 +143,7 @@ codanna mcp find_symbol name:NonExistent --json
   "code": "NOT_FOUND",
   "exit_code": 1,
   "message": "Symbol 'NonExistent' not found",
-  "hint": "Use 'search_symbols' with fuzzy matching or 'semantic_search_docs' for broader search.",
+  "hint": "Symbol not found. Use 'search_symbols' with fuzzy matching or 'semantic_search_docs' for broader search.",
   "data": null,
   "meta": {
     "schema_version": "1.0.0",
@@ -153,12 +162,12 @@ codanna mcp find_symbol name:NonExistent --json
 codanna mcp semantic_search_with_context query:"authentication" limit:2 --json | \
   jq -r '.data[].symbol.name'
 
-# Get file paths only
-codanna mcp find_symbol name:Parser --json | \
-  jq -r '.data[].file_path'
+# Get file paths only (null-safe: .data is null on not_found)
+codanna mcp find_symbol name:Envelope --json | \
+  jq -r '.data[]? | .file_path'
 
 # Check status before processing
-codanna mcp find_symbol name:Parser --json | \
+codanna mcp find_symbol name:Envelope --json | \
   jq -e '.status == "success"' && echo "Found"
 ```
 
@@ -187,9 +196,9 @@ cargo test 2>&1 | grep "panicked" | \
 ### Filter Large Results
 
 ```bash
-# Get only file paths and names for many symbols
-codanna mcp search_symbols query:parse limit:20 --json --fields name,file_path | \
-  jq -r '.data[] | "\(.name): \(.file_path)"'
+# Get only names and file paths for many symbols
+codanna mcp search_symbols query:parse limit:20 --json --fields symbol.name,symbol.file_path | \
+  jq -r '.data[] | "\(.symbol.name): \(.symbol.file_path)"'
 ```
 
 ## Next Steps

@@ -25,7 +25,7 @@
       "type": "integer",
       "minimum": 0,
       "maximum": 255,
-      "description": "Unix exit code. 0=success, 1=not_found, 2=error."
+      "description": "Unix exit code. 0=success, 1=not_found, 2=error. A stale-index refusal exits 7 with no envelope on stdout."
     },
     "message": {
       "type": "string",
@@ -36,7 +36,7 @@
       "description": "AI assistant guidance for next steps. Omitted when not applicable."
     },
     "data": {
-      "description": "Result payload. Shape depends on meta.entity_type. Null on error or not_found.",
+      "description": "Result payload. Shape depends on meta.entity_type. Null on error or not_found. With --fields, array items are top-level-key projections of the entity shape and do not satisfy the item schemas below.",
       "anyOf": [
         {"type": "null"},
         {"$ref": "#/$defs/symbolContext"},
@@ -390,6 +390,7 @@
         "line": {"type": "integer", "description": "Start line (1-indexed)."},
         "column": {"type": "integer", "description": "Start column."},
         "signature": {"type": ["string", "null"]},
+        "doc_comment": {"type": ["string", "null"]},
         "module_path": {"type": ["string", "null"]},
         "language_id": {"type": ["string", "null"], "description": "Language identifier of the symbol (e.g., 'rust', 'java'); matches the lang filter vocabulary."}
       }
