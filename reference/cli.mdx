@@ -223,7 +223,7 @@ This format is equivalent to using flags and works alongside them.
 | `2` | Error (invalid query, parse error, etc.) |
 
 <Note>
-An index built by a binary with different output semantics is refused before any tool runs: read commands exit `7` with a message naming both versions, and `codanna index` rebuilds from scratch automatically. This prevents mixed-semantics results after an upgrade.
+An index built by a binary with different output semantics is refused before any tool runs: read commands exit `7` with a message naming both versions, and `codanna index` rebuilds from scratch automatically. This prevents mixed-semantics results after an upgrade. The automatic rebuild also re-embeds when semantic search is enabled; large repositories take minutes. Since v0.10.1, a stale-index `codanna serve` (stdio) completes the MCP handshake with no tools and rebuild instructions, so MCP clients report the fix instead of a generic connection failure.
 </Note>
 
 See [Unix Piping](/workflows/piping) for JSON envelope schema details.

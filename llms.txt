@@ -11,7 +11,7 @@ Codanna is a local code intelligence and semantic code search MCP server for AI 
 - Default embeddings: 384-dim fastembed, local. Remote OpenAI-compatible embeddings opt-in via `CODANNA_EMBED_*` environment variables.
 - 15 supported languages: C, C++, C#, Clojure, GDScript, Go, Java, JavaScript, Kotlin, Lua, PHP, Python, Rust, Swift, TypeScript.
 - Use `analyze_impact <symbol>` before refactors to size blast radius. Use `semantic_search_with_context query:"<text>"` for one-call retrieval that bundles symbol, calls, and impact for every match.
-- Full agent rules (tier-grouped, <=255 chars each): https://docs.codanna.sh/context7-rules.md
+- Full agent rules (tier-grouped, <=255 chars each): https://context7.com/websites/codanna_sh
 - Bulk-content ingest for RAG: https://docs.codanna.sh/llms-full.txt
 
 ## Overview
@@ -36,6 +36,7 @@ Codanna is a local code intelligence and semantic code search MCP server for AI 
 ## Reference
 
 - [CLI reference](https://docs.codanna.sh/reference/cli): Every codanna subcommand, flags, exit codes, examples.
+- [Benchmarks](https://docs.codanna.sh/reference/benchmarks): Measured parser throughput, indexing pipeline cost, retrieval latency; machine spec and reproduction commands.
 - [JSON schema](https://docs.codanna.sh/reference/json-schema): Envelope `{type, status, code, exit_code, message, hint, data, error?, meta}`. Stable across all commands.
 - [MCP quick start](https://docs.codanna.sh/reference/mcp-quick): `codanna mcp <tool>` one-shot CLI invocations of every MCP tool.
 - [MCP persistent server](https://docs.codanna.sh/reference/mcp-persistent): `codanna serve` over stdio/HTTP/HTTPS for session-long agent workflows.

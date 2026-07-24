@@ -1,0 +1,87 @@
+---
+title: "Benchmarks"
+description: "Measured parser throughput, indexing pipeline cost, and retrieval latency, with reproduction commands"
+---
+
+Codanna's performance has three layers, and they scale differently with your hardware. Every number on this page is machine-dependent; the reference numbers below come from one machine, with the exact commands to reproduce them on yours.
+
+## What is measured
+
+| Layer | Command | What it covers |
+|:------|:--------|:---------------|
+| Parser throughput | `codanna benchmark` | Parsing and symbol extraction only — not the full pipeline |
+| Indexing pipeline | `codanna index` | Parse, extract, resolve relationships, commit to storage; plus embedding generation when semantic search is enabled |
+| Retrieval latency | `codanna mcp <tool>` / `codanna serve` | Query answering, one-shot CLI (cold) vs persistent server (warm) |
+
+<Note>
+`codanna benchmark` measures parsers in isolation. Full indexing adds relationship resolution, storage commits, and — when semantic search is enabled — embedding generation, which dominates wall time. The pipeline runs in parallel and scales with available cores.
+</Note>
+
+## Reference machine
+
+Apple M4 Max (12 performance + 4 efficiency cores), 48 GB RAM, macOS 27.0, codanna 0.10.1 (release build), rustc 1.97.1.
+
+## Parser throughput
+
+`codanna benchmark all --info`, cold pass over generated benchmark code:
+
+| Language   | Symbols | Avg time  | Rate               |
+|:-----------|--------:|----------:|-------------------:|
+| Go         | 2,503   | 10.0 ms   | 249,424 symbols/s  |
+| Lua        | 2,601   | 12.8 ms   | 203,406 symbols/s  |
+| Python     | 1,151   | 8.6 ms    | 133,741 symbols/s  |
+| TypeScript | 1,950   | 18.5 ms   | 105,650 symbols/s  |
+| C#         | 1,927   | 19.3 ms   | 99,854 symbols/s   |
+| Rust       | 700     | 8.6 ms    | 81,554 symbols/s   |
+| PHP        | 850     | 11.2 ms   | 76,144 symbols/s   |
+
+All benchmarked languages clear the 10,000 symbols/second target by 7.6x or more. The harness covers these seven languages; the other eight supported languages are parsed by the same tree-sitter pipeline but are not in the benchmark command.
+
+## Indexing pipeline
+
+Corpus: the codanna v0.10.1 source tree (`src/`, 275 files, 7,681 symbols, 12,227 relationships). Fresh workspace per run.
+
+| Configuration | Wall time | CPU utilization | Peak memory | Notes |
+|:--------------|----------:|----------------:|------------:|:------|
+| Semantic search off | 3.2 s | ~4.4 cores | 154 MB | Parse, resolve, commit, save |
+| Semantic search on | 20.1 s | ~11 cores | 3.9 GB | Adds 2,912 embeddings (~17 s of the total) |
+
+Embedding generation dominates semantic-enabled indexing and is the machine-dependent part: it runs on the local CPU across all cores. Parsing and relationship resolution are the fast part regardless of configuration.
+
+## Retrieval latency
+
+Cold numbers are one-shot CLI calls (`codanna mcp <tool>`): each call pays process startup and index open. Warm numbers are per-request round-trips against a running `codanna serve` stdio session, measured over MCP `tools/call`, median of 20 after warmup.
+
+| Query | Cold one-shot CLI | Warm server |
+|:------|------------------:|------------:|
+| `find_symbol` (exact) | 10.0 ms | 0.27 ms |
+| `search_symbols` (fuzzy) | 10.7 ms | 0.39 ms |
+| `semantic_search_docs` | 203 ms | 3.1 ms |
+| `semantic_search_with_context` | — | 2.7 ms |
+
+Cold semantic calls pay the embedding model load on every invocation; the persistent server loads it once. If your workflow leans on semantic queries, run `codanna serve`.
+
+## How to reproduce
+
+```bash
+# Parser throughput
+codanna benchmark all --info
+
+# Indexing pipeline (fresh workspace; run once with semantic_search
+# enabled = false in .codanna/settings.toml, once with true)
+codanna init
+time codanna index <path-to-repo>
+
+# Retrieval, cold one-shot
+time codanna mcp find_symbol name:"<symbol>" --json
+time codanna mcp semantic_search_docs query:"<text>" limit:5
+```
+
+Warm-server latency requires timing MCP `tools/call` round-trips against `codanna serve` from an MCP client.
+
+## Caveats
+
+- Every number varies with CPU, core count, memory bandwidth, and file system cache state. Expect the same order of magnitude on comparable hardware, not the same digits.
+- The embedding model downloads once on first semantic-enabled run; first-run timings include the download.
+- Corpus shape matters: symbol density, file sizes, and language mix shift pipeline rates.
+- Warm and cold timings differ by orders of magnitude for semantic queries; compare like with like.
