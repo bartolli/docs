@@ -1,0 +1,58 @@
+# Codanna
+
+> Local code intelligence MCP server and CLI for AI coding agents.
+
+Codanna is a local code intelligence and semantic code search MCP server for AI coding agents. One MCP call returns symbol context, call graph, and impact analysis pre-correlated — replacing multi-turn grep+read loops with a single bundled response. Same tools accessible via persistent MCP server (`codanna serve`) or one-shot CLI (`codanna mcp <tool>`). Rust, 15 languages, Apache-2.0.
+
+## Important notes for LLMs
+
+- Two operational modes: persistent MCP server (`codanna serve`) and one-shot CLI (`codanna mcp <tool_name> arg:value`). Same tool surface, no daemon needed for CLI mode.
+- Single stdio MCP server per index since v0.9.20. Concurrent stdio servers on the same `.codanna/` directory are rejected at startup. Use `serve --http` for multi-client access.
+- Default embeddings: 384-dim fastembed, local. Remote OpenAI-compatible embeddings opt-in via `CODANNA_EMBED_*` environment variables.
+- 15 supported languages: C, C++, C#, Clojure, GDScript, Go, Java, JavaScript, Kotlin, Lua, PHP, Python, Rust, Swift, TypeScript.
+- Use `analyze_impact <symbol>` before refactors to size blast radius. Use `semantic_search_with_context query:"<text>"` for one-call retrieval that bundles symbol, calls, and impact for every match.
+- Full agent rules (tier-grouped, <=255 chars each): https://docs.codanna.sh/context7-rules.md
+- Bulk-content ingest for RAG: https://docs.codanna.sh/llms-full.txt
+
+## Overview
+
+- [Codanna documentation home](https://docs.codanna.sh): Local code intelligence MCP server and CLI for AI coding agents.
+- [Installation](https://docs.codanna.sh/installation): Install via Cargo or prebuilt binary; initialize `.codanna/`.
+
+## Features
+
+- [Semantic code search](https://docs.codanna.sh/features/semantic-search): IVFFlat vector search over symbol embeddings. Memmapped storage, sub-microsecond access.
+- [Relationships](https://docs.codanna.sh/features/relationships): Call graph and dependency traversal — `get_calls`, `find_callers`, `analyze_impact`.
+- [Document search](https://docs.codanna.sh/features/document-search): RAG over markdown collections with hybrid chunking, per-collection isolation.
+- [Languages](https://docs.codanna.sh/features/languages): 15 supported via tree-sitter; 8 with module-path auto-resolution from build config.
+- [Collaboration](https://docs.codanna.sh/features/collaboration): Shared HTTP/HTTPS MCP server for multi-agent or team setups.
+
+## Workflows
+
+- [Tool tiers](https://docs.codanna.sh/workflows/tool-tiers): Recommended ordering — start with `semantic_search_with_context` and `analyze_impact`, narrow to `find_symbol`/`get_calls`/`find_callers`, finish with `search_symbols` for browsing.
+- [Agentic guidance](https://docs.codanna.sh/workflows/agentic-guidance): Refactor loop, debug loop, pre-edit check patterns for AI coding agents.
+- [Piping](https://docs.codanna.sh/workflows/piping): CLI output piping with `--json --fields` projection, JSON envelope schema, `jq` examples.
+
+## Reference
+
+- [CLI reference](https://docs.codanna.sh/reference/cli): Every codanna subcommand, flags, exit codes, examples.
+- [JSON schema](https://docs.codanna.sh/reference/json-schema): Envelope `{type, status, code, exit_code, message, hint, data, error?, meta}`. Stable across all commands.
+- [MCP quick start](https://docs.codanna.sh/reference/mcp-quick): `codanna mcp <tool>` one-shot CLI invocations of every MCP tool.
+- [MCP persistent server](https://docs.codanna.sh/reference/mcp-persistent): `codanna serve` over stdio/HTTP/HTTPS for session-long agent workflows.
+- [MCP networking](https://docs.codanna.sh/reference/mcp-network): HTTP/HTTPS binding, OAuth, container exposure.
+- [HTTPS setup](https://docs.codanna.sh/reference/https-setup): TLS configuration, certificate generation.
+- [Customization](https://docs.codanna.sh/reference/customization): `.codanna/settings.toml` reference, `[guidance]` templates.
+- [Project resolvers](https://docs.codanna.sh/reference/project-resolvers): Per-language module-path resolution from `go.mod` / `tsconfig.json` / `pyproject.toml` / etc.
+- [Debugging](https://docs.codanna.sh/reference/debugging): Index inspection, hot-reload diagnostics, `--info` output.
+
+## Contributing
+
+- [Contribute](https://docs.codanna.sh/contribute): Source layout, language-addition guide, parser conventions, tree-sitter tooling.
+- [GitHub repository](https://github.com/bartolli/codanna): Issues, releases, source.
+
+## Performance
+
+Measured via `codanna benchmark all` on M-series Mac, codanna v0.9.21:
+- Parser rate: ~70,000 symbols/second (Rust)
+- Symbol lookup latency: sub-10 ms
+- Vector access: sub-microsecond via memmap

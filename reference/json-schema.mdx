@@ -3,7 +3,7 @@ title: "JSON Schema"
 description: "Output structure reference for CLI commands"
 ---
 
-All Codanna CLI commands with `--json` output follow the Envelope schema (version 1.0.0).
+Codanna is a local code intelligence MCP server and CLI for AI coding agents. All CLI commands with `--json` output follow the Envelope schema (version 1.0.0) — type, status, code, exit_code, message, hint, data, meta.
 
 ## Envelope Structure
 
@@ -57,7 +57,7 @@ The `data` field structure depends on the command. Check `meta.entity_type` to d
 
 ```json
 {
-  "data": {
+  "data": [{
     "symbol": {
       "id": 5156,
       "name": "Parser",
@@ -77,9 +77,11 @@ The `data` field structure depends on the command. Check `meta.entity_type` to d
       "calls": [...],
       "called_by": [...]
     }
-  }
+  }]
 }
 ```
+
+`data` is an array even for a single match. `calls`/`called_by` entries are `[symbol, metadata]` pairs; the metadata object carries `line` (1-indexed), `column` (0-indexed), `receiver`, and `static_call`.
 
 ### search_result (search_symbols)
 
@@ -91,7 +93,8 @@ The `data` field structure depends on the command. Check `meta.entity_type` to d
       "name": "parse",
       "kind": "Function",
       "file_path": "src/parser.rs",
-      "line": 42
+      "line": 42,
+      "language_id": "rust"
     },
     "score": 0.95,
     "highlights": ["parse"]
@@ -108,10 +111,16 @@ The `data` field structure depends on the command. Check `meta.entity_type` to d
     "name": "process",
     "kind": "Function",
     "file_path": "src/lib.rs",
-    "range": {"start_line": 50, "end_line": 75}
+    "range": {"start_line": 50, "end_line": 75},
+    "call_line": 62,
+    "call_column": 8
   }]
 }
 ```
+
+<Note>
+Every call edge carries its call site: `call_line` is 1-indexed (editor coordinate), `call_column` is 0-indexed (machine coordinate, like `range` columns). `range` objects stay 0-indexed throughout.
+</Note>
 
 ### document (search_documents)
 
@@ -151,3 +160,14 @@ For code generation or tooling integration, the formal JSON Schema is available 
 ```
 https://docs.codanna.sh/schema/envelope.schema.json
 ```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Unix Piping" icon="terminal" href="/workflows/piping">
+    Consume the envelope with `jq`, `xargs`, and Unix tools.
+  </Card>
+  <Card title="CLI Reference" icon="terminal" href="/reference/cli">
+    Commands that emit JSON envelopes.
+  </Card>
+</CardGroup>

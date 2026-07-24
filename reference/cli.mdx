@@ -3,7 +3,7 @@ title: "CLI Reference"
 description: "Commands, flags, and options"
 ---
 
-> Complete reference for Codanna command-line interface.
+Codanna is a local code intelligence MCP server and CLI for AI coding agents. This is the complete reference for the command-line interface — global flags, commands, MCP tools, and exit codes.
 
 ## Global Flags
 
@@ -221,5 +221,9 @@ This format is equivalent to using flags and works alongside them.
 | `0` | Success with results |
 | `1` | Not found (no results) |
 | `2` | Error (invalid query, parse error, etc.) |
+
+<Note>
+An index built by a binary with different output semantics is refused before any tool runs: read commands exit `7` with a message naming both versions, and `codanna index` rebuilds from scratch automatically. This prevents mixed-semantics results after an upgrade.
+</Note>
 
 See [Unix Piping](/workflows/piping) for JSON envelope schema details.

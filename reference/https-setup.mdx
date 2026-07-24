@@ -3,7 +3,7 @@ title: "HTTPS Setup"
 description: "Self-signed certificates for secure local development"
 ---
 
-> Configure TLS/SSL encryption with self-signed certificates. Examples use Claude Code, but the method applies to other Node.js-based MCP clients.
+Codanna is a local code intelligence MCP server and CLI for AI coding agents. This guide configures TLS/SSL encryption with self-signed certificates for the HTTPS MCP server. Examples use Claude Code, but the method applies to other Node.js-based MCP clients.
 
 ## Overview
 
@@ -166,3 +166,14 @@ Self-signed certificates are for local development. For production:
 <Warning>
 Never use `NODE_TLS_REJECT_UNAUTHORIZED=0` in production. This disables ALL certificate validation.
 </Warning>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="MCP Network" icon="globe" href="/reference/mcp-network">
+    HTTP and HTTPS server modes for multiple clients.
+  </Card>
+  <Card title="MCP Persistent" icon="plug" href="/reference/mcp-persistent">
+    Stdio transport — alternative to HTTPS for single-client setups.
+  </Card>
+</CardGroup>

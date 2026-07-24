@@ -175,11 +175,19 @@
         "range": {"$ref": "#/$defs/range"},
         "file_path": {
           "type": "string",
-          "description": "Relative file path."
+          "description": "File path relative to the file's indexed root, in both in-tree and out-of-tree indexing modes."
         },
         "signature": {
           "type": ["string", "null"],
           "description": "Function/method signature."
+        },
+        "call_line": {
+          "type": "integer",
+          "description": "Call-site line (1-indexed editor coordinate). Present only on rows returned by call-edge tools (get_calls, find_callers)."
+        },
+        "call_column": {
+          "type": "integer",
+          "description": "Call-site column (0-indexed machine coordinate). Present only on rows returned by call-edge tools."
         },
         "doc_comment": {
           "type": ["string", "null"],
@@ -329,14 +337,27 @@
     },
     "relationshipMetadata": {
       "type": ["object", "null"],
+      "description": "Call-site metadata paired with a symbol in calls/called_by tuples.",
       "properties": {
         "line": {
-          "type": "integer",
-          "description": "Call site line number."
+          "type": ["integer", "null"],
+          "description": "Call-site line (1-indexed editor coordinate)."
+        },
+        "column": {
+          "type": ["integer", "null"],
+          "description": "Call-site column (0-indexed machine coordinate, like range columns)."
         },
         "context": {
-          "type": "string",
-          "description": "Additional context (e.g., receiver type)."
+          "type": ["string", "null"],
+          "description": "Additional context; null when absent."
+        },
+        "receiver": {
+          "type": ["string", "null"],
+          "description": "Receiver expression of the call (e.g. 'self', a variable name); null for plain calls."
+        },
+        "static_call": {
+          "type": "boolean",
+          "description": "True for qualified static-form calls (Type::method / Type.method)."
         }
       }
     },
@@ -369,7 +390,8 @@
         "line": {"type": "integer", "description": "Start line (1-indexed)."},
         "column": {"type": "integer", "description": "Start column."},
         "signature": {"type": ["string", "null"]},
-        "module_path": {"type": ["string", "null"]}
+        "module_path": {"type": ["string", "null"]},
+        "language_id": {"type": ["string", "null"], "description": "Language identifier of the symbol (e.g., 'rust', 'java'); matches the lang filter vocabulary."}
       }
     },
     "documentChunk": {
@@ -422,6 +444,23 @@
         "languages": {
           "type": "object",
           "additionalProperties": {"type": "integer"}
+        },
+        "symbol_kinds": {
+          "type": "object",
+          "additionalProperties": {"type": "integer"},
+          "description": "Symbol count per kind (full map, unsampled); values sum to symbol_count."
+        },
+        "semantic_search": {
+          "type": "object",
+          "description": "Semantic search status; nullable fields are null when disabled.",
+          "properties": {
+            "enabled": {"type": "boolean"},
+            "model_name": {"type": ["string", "null"]},
+            "embeddings": {"type": ["integer", "null"]},
+            "dimensions": {"type": ["integer", "null"]},
+            "created": {"type": ["string", "null"], "description": "Humanized age string (e.g. '41 minutes ago')."},
+            "updated": {"type": ["string", "null"], "description": "Humanized age string."}
+          }
         },
         "document_collections": {
           "type": "array",

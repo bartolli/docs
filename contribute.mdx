@@ -1,8 +1,180 @@
 ---
 title: "Contribute"
-description: "Guidelines for contributing to Codanna"
+description: "Source layout, parser conventions, tree-sitter tooling, and PR workflow"
 ---
 
-This page is under development due to recent API and pipeline changes.
+Codanna is a local code intelligence MCP server and CLI for AI coding agents. This page covers the source layout, the language-addition workflow, parser conventions, tree-sitter tooling, and the pull request process.
 
-See [GitHub Repository](https://github.com/bartolli/codanna) for current contribution guidelines.
+## Prerequisites
+
+- Rust 1.85+ (edition 2024; install via [rustup](https://rustup.rs/))
+- Git
+- macOS, Linux, or WSL
+
+Linux also needs `pkg-config` and `libssl-dev` (Debian/Ubuntu) or equivalents on other distributions.
+
+## Repository Layout
+
+```text
+codanna/
+├── src/
+│   ├── parsing/           # Language parsers (one subdirectory per language)
+│   ├── indexing/          # Pipeline stages, resolution, IndexFacade
+│   ├── storage/           # Tantivy index, memory-mapped caches
+│   ├── documents/         # Markdown/text RAG storage
+│   ├── vector/            # IVFFlat with memmap
+│   ├── semantic/          # Embedding generation
+│   ├── mcp/               # MCP server (stdio, HTTP, HTTPS)
+│   ├── watcher/           # File watching and debounce
+│   └── project_resolver/  # Language config parsing
+├── contributing/          # Dev guides, scripts, tree-sitter tooling
+└── tests/                 # Integration and parser tests
+```
+
+## Local Build and Test
+
+```bash
+git clone https://github.com/bartolli/codanna.git
+cd codanna
+cargo build --release --all-features
+cargo test
+```
+
+Pre-commit checks (format, clippy, compile):
+
+```bash
+./contributing/scripts/quick-check.sh
+```
+
+Auto-fix formatting and lint issues:
+
+```bash
+./contributing/scripts/auto-fix.sh
+```
+
+Full CI parity locally (run before a PR):
+
+```bash
+./contributing/scripts/full-test.sh
+```
+
+## Adding a Language
+
+Each language lives in a subdirectory under `src/parsing/<lang>/` with six files:
+
+| File | Purpose |
+|:-----|:--------|
+| `parser.rs` | Implements `LanguageParser` — tree-sitter parse, symbol extraction |
+| `behavior.rs` | Implements `LanguageBehavior` — module paths, visibility, import semantics |
+| `definition.rs` | Language metadata for the registry |
+| `resolution.rs` | Implements `ResolutionScope` — local, imported, module, crate ordering |
+| `audit.rs` | Tree-sitter coverage audit and grammar analysis |
+| `mod.rs` | Module declaration and re-exports |
+
+<Steps>
+  <Step title="Read the architecture docs">
+    Three guides under `contributing/development/` cover the full surface:
+    - `language-architecture.md` — design principles, resolution flow, state management
+    - `language-support.md` — trait API reference and implementation checklist
+    - `language-patterns.md` — implementation patterns, naming conventions, parser/behavior method organization
+  </Step>
+  <Step title="Install the tree-sitter grammar">
+    ```bash
+    ./contributing/tree-sitter/scripts/setup.sh <language>
+    ```
+    See `contributing/tree-sitter/README.md` for grammar version tracking, ABI exploration, and AST comparison scripts.
+  </Step>
+  <Step title="Implement the six files">
+    Use existing languages as reference. Rust, TypeScript, Python, Go, and PHP are the most feature-complete.
+  </Step>
+  <Step title="Register the language">
+    Wire the new language into `src/parsing/registry.rs` and declare its definition in your `definition.rs`.
+  </Step>
+  <Step title="Write tests">
+    Add a comprehensive example under `examples/<language>/` and an integration test under `tests/`. See `tests/CLAUDE.md` for test infrastructure rules — Tantivy tests go in unit tests in source files, not the `tests/` directory.
+  </Step>
+  <Step title="Run the AST comparison">
+    ```bash
+    ./contributing/tree-sitter/scripts/compare-nodes.sh <language>
+    ```
+    Generates `AUDIT_REPORT.md` and `GRAMMAR_ANALYSIS.md` under `contributing/parsers/<language>/`, surfacing handled vs. unhandled tree-sitter node types.
+  </Step>
+</Steps>
+
+## Parser Development Tools
+
+`codanna parse` outputs the AST as JSONL for parser debugging and node-type discovery:
+
+```bash
+codanna parse src/main.rs                              # Named nodes only (matches tree-sitter)
+codanna parse src/main.rs --all-nodes                  # Include anonymous nodes (operators, punctuation)
+codanna parse src/main.rs --max-depth 3                # Limit traversal depth
+codanna parse src/main.rs | jq -r .node | sort -u      # List unique node types
+codanna parse src/main.rs | jq 'select(.depth == 1)'   # Top-level nodes only
+```
+
+Compare codanna output against tree-sitter directly:
+
+```bash
+./contributing/tree-sitter/scripts/explore-ast.sh examples/rust/main.rs both
+```
+
+## Coding Principles
+
+All code must follow the Rust development guidelines in `contributing/development/guidelines.md`. Key principles:
+
+- **Zero-cost abstractions** — no unnecessary allocations on hot paths
+- **Type safety** — newtypes over primitives (`SymbolId`, `FileId` use `NonZeroU32`)
+- **Performance targets** — symbol lookups under 10ms, parser above 10,000 symbols/second, CLI startup under 500ms
+- **Structured errors** — include suggestions and context for recovery
+- **Single-responsibility functions** — decompose complex logic into focused helpers
+
+## Performance Targets
+
+| Metric | Target |
+|:-------|:-------|
+| Parser speed | > 10,000 symbols/second |
+| Symbol lookups | < 10ms from memmap |
+| Semantic search end-to-end | < 300ms |
+| Memory per symbol | ~ 100 bytes |
+| CLI startup | < 500ms |
+
+PRs that touch hot paths should document any measurable difference.
+
+## Pull Request Workflow
+
+<Steps>
+  <Step title="Open an issue first">
+    Describe the proposed change. Discuss major features in the issue before implementing. Link the PR with `Fixes #<num>`.
+  </Step>
+  <Step title="Scope the PR">
+    One feature per PR. Multiple small related fixes can be combined. Keep PRs focused and reviewable.
+  </Step>
+  <Step title="Run local CI">
+    ```bash
+    ./contributing/scripts/auto-fix.sh
+    ./contributing/scripts/full-test.sh
+    ```
+  </Step>
+  <Step title="Update documentation">
+    Document new features. Update `README.md` and the relevant pages under `documentation/docs/`. Include usage examples.
+  </Step>
+  <Step title="Submit the PR">
+    Include tests for new code. Document performance impact when it applies. Flag breaking changes clearly.
+  </Step>
+</Steps>
+
+<Note>
+Contributions are licensed under Apache License 2.0. See [LICENSE](https://github.com/bartolli/codanna/blob/main/LICENSE) for terms.
+</Note>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="GitHub Repository" icon="github" href="https://github.com/bartolli/codanna">
+    Source, issues, releases.
+  </Card>
+  <Card title="CLI Reference" icon="terminal" href="/reference/cli">
+    Commands, flags, MCP tools, and exit codes.
+  </Card>
+</CardGroup>

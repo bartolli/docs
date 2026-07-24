@@ -3,7 +3,7 @@ title: "Debugging"
 description: "Troubleshooting and pipeline debugging"
 ---
 
-> Common issues and how to resolve them.
+Codanna is a local code intelligence MCP server and CLI for AI coding agents. This page covers common issues and resolutions for indexing, semantic search, MCP integration, and pipeline debugging.
 
 ## Semantic Search Not Working
 
@@ -114,6 +114,18 @@ Shows:
 
 | Code | Meaning |
 |:-----|:--------|
-| `0` | Success |
-| `1` | General error |
-| `3` | Not found (retrieve commands) |
+| `0` | Success with results |
+| `1` | Not found (no results) |
+| `2` | Error (invalid query, parse error, etc.) |
+| `7` | Index refused: built by a binary with different output semantics. Run `codanna index` to rebuild. |
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="CLI Reference" icon="terminal" href="/reference/cli">
+    Commands, flags, and exit codes.
+  </Card>
+  <Card title="Customization" icon="sliders" href="/reference/customization">
+    Logging configuration and per-module log levels.
+  </Card>
+</CardGroup>
