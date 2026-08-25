@@ -31,7 +31,7 @@ All `--json` output follows a consistent envelope structure (schema version 1.0.
 
 | Field | Type | Description |
 |:------|:-----|:------------|
-| `type` | `"result"` \| `"error"` | Message type for stream discrimination |
+| `type` | `"result"` \| `"error"` | Message type for stream discrimination; streaming commands add `"begin"` and `"summary"` |
 | `status` | `"success"` \| `"not_found"` \| `"partial_success"` \| `"error"` | Operation outcome |
 | `code` | string | Machine-readable code: `OK`, `NOT_FOUND`, `PARSE_ERROR`, `INDEX_ERROR`, `INVALID_QUERY`, `INTERNAL_ERROR` |
 | `exit_code` | integer | Unix exit code (0-255) |
@@ -52,6 +52,16 @@ All `--json` output follows a consistent envelope structure (schema version 1.0.
 <Note>
 One exit code carries no envelope: a stale index (built by a binary with different output semantics) refuses with exit `7` and the heal command on stderr — stdout stays empty, so `jq` receives no input. Gate scripts on the exit code, not only on parsed output.
 </Note>
+
+### Streaming Mode
+
+`codanna dump` (v0.14.0+) uses the envelope's streaming mode: a `begin` envelope, one `result` envelope per line for every symbol and relationship, and a terminal `summary` envelope with totals. The per-line shape makes the whole graph pipeable:
+
+```bash
+codanna dump --edges --relation calls | jq -r 'select(.type=="result") | .data | "\(.from.name) -> \(.to.name)"'
+```
+
+See the [CLI reference](/reference/cli#dump) for flags and row shapes.
 
 ## Field Filtering
 

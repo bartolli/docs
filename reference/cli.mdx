@@ -26,6 +26,7 @@ These flags work on every command:
 | `codanna remove-dir <path>` | Remove folder from indexed paths | `codanna remove-dir old-project` |
 | `codanna list-dirs` | List configured indexed directories | `codanna list-dirs` |
 | `codanna retrieve <subcommand>` | Query symbols and relationships | `codanna retrieve symbol Parser` |
+| `codanna dump` | Stream the resolved graph as JSON Lines | `codanna dump --edges --relation calls` |
 | `codanna mcp <tool>` | Execute MCP tools directly | `codanna mcp find_symbol main` |
 | `codanna mcp-test` | Test MCP connection and list tools | `codanna mcp-test --tool find_symbol` |
 | `codanna serve` | Start MCP server | `codanna serve --watch` |
@@ -78,6 +79,42 @@ Filters also work as key:value pairs:
 ```bash
 codanna retrieve search query:parse limit:5 kind:function
 ```
+
+## Dump
+
+Stream the whole index as JSON Lines: a `begin` envelope, one `result` envelope per symbol and per relationship, and a terminal `summary` envelope. Every line is the standard [JSON envelope](/workflows/piping); row ordering is unspecified. Available since v0.14.0.
+
+| Flag | Description |
+|:-----|:------------|
+| `--symbols` | Emit symbol rows only |
+| `--edges` | Emit relationship rows only |
+| `--relation <kind>` | Keep relationship rows of one kind: `calls`, `defines`, `uses`, `implements`, `extends` |
+| `--kind <kind>` | Keep symbol rows of one kind (`function`, `method`, `struct`, ...); relationship rows are unaffected |
+
+```bash
+codanna dump > graph.jsonl
+codanna dump | jq -c 'select(.type=="result") | .data'
+codanna dump --edges --relation calls
+codanna dump --symbols --kind method
+```
+
+A relationship row identifies both endpoints by name, kind, file, and line, and carries the persisted call metadata:
+
+```json
+{"type":"result","status":"success","code":"OK","exit_code":0,"message":"","data":{"relation":"Calls","from":{"id":5,"name":"test_target_function","kind":"Function","file_path":"tests/test_mod.py","line":4},"to":{"id":3,"name":"target_function","kind":"Function","file_path":"src/pkg/mod.py","line":1},"metadata":{"line":5,"column":11,"receiver":null,"static_call":false,"context":null}},"meta":{"schema_version":"1.0.0","entity_type":"relationship"}}
+```
+
+The `summary` envelope closes the stream with totals and index provenance:
+
+```json
+{"type":"summary","status":"success","code":"OK","exit_code":0,"message":"dump complete","data":{"symbols":5,"relationships":1,"orphan_edges_dropped":0,"duplicate_symbol_ids":0,"emission_version":3,"builder_commit":"023afdc"},"meta":{"schema_version":"1.0.0","entity_type":"graph","count":6}}
+```
+
+<Note>
+Scalar `line` fields (endpoint `line`, metadata `line`) are 1-indexed editor coordinates; `range` objects on symbol rows are 0-indexed machine coordinates. `id` values are scoped to the current index instance and change across re-indexes — identify symbols durably by name, file, line, and kind.
+</Note>
+
+An unknown `--relation` or `--kind` value is rejected before any line is written (exit `2`, accepted values listed on stderr). A stale index refuses with exit `7` as on every read command.
 
 ## MCP Tools
 
